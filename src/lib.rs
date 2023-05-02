@@ -26,6 +26,8 @@ extern crate num_traits;
 #[macro_use]
 extern crate serde;
 
+mod rect;
 mod vec;
 
+pub use rect::{Rect2, Rect3};
 pub use vec::{Vec2, Vec3, Vec4, vec2, vec3, vec4};
