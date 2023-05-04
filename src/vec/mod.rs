@@ -28,6 +28,8 @@ use core::ops::{
     SubAssign,
 };
 
+use crate::ops::{Cross, Dot};
+
 /// 2-dimensional vector type.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -67,6 +69,67 @@ pub struct Vec3<T> {
     pub x: T,
     pub y: T,
     pub z: T,
+}
+
+impl<T> Cross for Vec3<T>
+where T: Copy + Mul,
+      <T as Mul>::Output: Sub
+{
+    type Output = Vec3<<<T as Mul>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: Vec3<T>) -> Self::Output {
+        Vec3 {
+            x: self.y * rhs.z - self.z * rhs.y,
+            y: self.z * rhs.x - self.x * rhs.z,
+            z: self.x * rhs.y - self.y * rhs.x,
+        }
+    }
+}
+
+impl<'a, T> Cross<Vec3<T>> for &'a Vec3<T>
+where T: Copy,
+      &'a T: Mul<T>,
+      <&'a T as Mul<T>>::Output: Sub
+{
+    type Output = Vec3<<<&'a T as Mul<T>>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: Vec3<T>) -> Self::Output {
+        Vec3 {
+            x: &self.y * rhs.z - &self.z * rhs.y,
+            y: &self.z * rhs.x - &self.x * rhs.z,
+            z: &self.x * rhs.y - &self.y * rhs.x,
+        }
+    }
+}
+
+impl<'r, T> Cross<&'r Vec3<T>> for Vec3<T>
+where T: Copy + Mul<&'r T>,
+      <T as Mul<&'r T>>::Output: Sub
+{
+    type Output = Vec3<<<T as Mul<&'r T>>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: &'r Vec3<T>) -> Self::Output {
+        Vec3 {
+            x: self.y * &rhs.z - self.z * &rhs.y,
+            y: self.z * &rhs.x - self.x * &rhs.z,
+            z: self.x * &rhs.y - self.y * &rhs.x,
+        }
+    }
+}
+
+impl<'a, 'r, T> Cross<&'r Vec3<T>> for &'a Vec3<T>
+where &'a T: Mul<&'r T>,
+      <&'a T as Mul<&'r T>>::Output: Sub
+{
+    type Output = Vec3<<<&'a T as Mul<&'r T>>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: &'r Vec3<T>) -> Self::Output {
+        Vec3 {
+            x: &self.y * &rhs.z - &self.z * &rhs.y,
+            y: &self.z * &rhs.x - &self.x * &rhs.z,
+            z: &self.x * &rhs.y - &self.y * &rhs.x,
+        }
+    }
 }
 
 impl<T: Display> Display for Vec3<T> {
@@ -296,11 +359,37 @@ macro_rules! impl_all {
                 $vec { $($field),* }
             }
 
+            /// Gets the product of the vector's scalar components.
+            pub fn product(self) -> T
+            where T: Mul<Output = T>
+            {
+                // Implementation looks ugly but optimizes to the same machine code as x * y * ...
+                let mut a = None;
+                $(a = match a {
+                    None => Some(self.$field),
+                    Some(a) => Some(a * self.$field),
+                };)*
+                a.unwrap()
+            }
+
             /// Converts the vector's fields into another type.
             pub fn ref_convert<'a, U>(&'a self) -> $vec<U>
             where &'a T: Into<U>
             {
                 $vec { $($field: (&self.$field).into()),* }
+            }
+
+            /// Gets the sum of the vector's scalar components.
+            pub fn sum(self) -> T
+            where T: Add<Output = T>
+            {
+                // Implementation looks ugly but optimizes to the same machine code as x + y + ...
+                let mut a = None;
+                $(a = match a {
+                    None => Some(self.$field),
+                    Some(a) => Some(a + self.$field),
+                };)*
+                a.unwrap()
             }
 
             /// Attempts to convert the vector's fields into another type. On failure, this returns
@@ -317,6 +406,50 @@ macro_rules! impl_all {
             where &'a T: TryInto<U>
             {
                 Ok($vec { $($field: (&self.$field).try_into()?),* })
+            }
+        }
+
+        impl<T> Dot for $vec<T>
+        where T: Mul,
+              <T as Mul>::Output: Add<Output = <T as Mul>::Output>
+        {
+            type Output = <T as Mul>::Output;
+
+            fn dot(self, rhs: $vec<T>) -> Self::Output {
+                (self * rhs).sum()
+            }
+        }
+
+        impl<'a, T> Dot<$vec<T>> for &'a $vec<T>
+        where &'a T: Mul<T>,
+              <&'a T as Mul<T>>::Output: Add<Output = <&'a T as Mul<T>>::Output>
+        {
+            type Output = <&'a T as Mul<T>>::Output;
+
+            fn dot(self, rhs: $vec<T>) -> Self::Output {
+                (self * rhs).sum()
+            }
+        }
+
+        impl<'r, T> Dot<&'r $vec<T>> for $vec<T>
+        where T: Mul<&'r T>,
+              <T as Mul<&'r T>>::Output: Add<Output = <T as Mul<&'r T>>::Output>
+        {
+            type Output = <T as Mul<&'r T>>::Output;
+
+            fn dot(self, rhs: &'r $vec<T>) -> Self::Output {
+                (self * rhs).sum()
+            }
+        }
+
+        impl<'a, 'r, T> Dot<&'r $vec<T>> for &'a $vec<T>
+        where &'a T: Mul<&'r T>,
+              <&'a T as Mul<&'r T>>::Output: Add<Output = <&'a T as Mul<&'r T>>::Output>
+        {
+            type Output = <&'a T as Mul<&'r T>>::Output;
+
+            fn dot(self, rhs: &'r $vec<T>) -> Self::Output {
+                (self * rhs).sum()
             }
         }
 
