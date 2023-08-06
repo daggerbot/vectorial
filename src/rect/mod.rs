@@ -21,17 +21,17 @@ use core::ops::{
     SubAssign,
 };
 
-use crate::vec::{Vec2, Vec3};
+use crate::vec::{Vector2, Vector3};
 
 /// 2-dimensional, axis-aligned rectangle structure defined as two opposite points.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect2<T>(pub Vec2<T>, pub Vec2<T>);
+pub struct Rect2<T>(pub Vector2<T>, pub Vector2<T>);
 
 /// 3-dimensional, axis-aligned rectangular prism structure defined as two opposite points.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect3<T>(pub Vec3<T>, pub Vec3<T>);
+pub struct Rect3<T>(pub Vector3<T>, pub Vector3<T>);
 
 impl<T> Rect3<T> {
     /// Returns `&self.1.z - &self.0.z`.
@@ -409,8 +409,8 @@ macro_rules! impl_all {
 }
 
 impl_all! {
-    impl Rect2: Vec2(x, y), (x0: T, y0: T | x1: T, y1: T);
-    impl Rect3: Vec3(x, y, z), (x0: T, y0: T, z0: T | x1: T, y1: T, z1: T);
+    impl Rect2: Vector2(x, y), (x0: T, y0: T | x1: T, y1: T);
+    impl Rect3: Vector3(x, y, z), (x0: T, y0: T, z0: T | x1: T, y1: T, z1: T);
 }
 
 //--------------------------------------------------------------------------------------------------

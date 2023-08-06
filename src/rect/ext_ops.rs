@@ -23,7 +23,7 @@ use ext_ops::{
 };
 
 use crate::rect::{Rect2, Rect3};
-use crate::vec::{Vec2, Vec3};
+use crate::vec::{Vector2, Vector3};
 
 /// Implements unary operators for rects.
 macro_rules! impl_unary_ops {
@@ -310,6 +310,6 @@ macro_rules! impl_all {
 }
 
 impl_all! {
-    impl Rect2: Vec2;
-    impl Rect3: Vec3;
+    impl Rect2: Vector2;
+    impl Rect3: Vector3;
 }

@@ -32,4 +32,4 @@ mod vec;
 
 pub use ops::{Cross, Dot, cross, dot};
 pub use rect::{Rect2, Rect3};
-pub use vec::{Vec2, Vec3, Vec4, vec2, vec3, vec4};
+pub use vec::{Vector2, Vector3, Vector4, vec2, vec3, vec4};
