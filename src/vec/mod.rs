@@ -28,15 +28,17 @@ use core::ops::{
     SubAssign,
 };
 
+use crate::ops::{Cross, Dot};
+
 /// 2-dimensional vector type.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vec2<T> {
+pub struct Vector2<T> {
     pub x: T,
     pub y: T,
 }
 
-impl<T: Display> Display for Vec2<T> {
+impl<T: Display> Display for Vector2<T> {
     fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
         f.write_str("(")?;
         Display::fmt(&self.x, f)?;
@@ -47,14 +49,14 @@ impl<T: Display> Display for Vec2<T> {
 }
 
 #[cfg(feature = "num-complex")]
-impl<T> From<num_complex::Complex<T>> for Vec2<T> {
-    fn from(c: num_complex::Complex<T>) -> Vec2<T> {
-        Vec2 { x: c.re, y: c.im }
+impl<T> From<num_complex::Complex<T>> for Vector2<T> {
+    fn from(c: num_complex::Complex<T>) -> Vector2<T> {
+        Vector2 { x: c.re, y: c.im }
     }
 }
 
 #[cfg(feature = "num-complex")]
-impl<T> Into<num_complex::Complex<T>> for Vec2<T> {
+impl<T> Into<num_complex::Complex<T>> for Vector2<T> {
     fn into(self) -> num_complex::Complex<T> {
         num_complex::Complex { re: self.x, im: self.y }
     }
@@ -63,13 +65,74 @@ impl<T> Into<num_complex::Complex<T>> for Vec2<T> {
 /// 3-dimensional vector type.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vec3<T> {
+pub struct Vector3<T> {
     pub x: T,
     pub y: T,
     pub z: T,
 }
 
-impl<T: Display> Display for Vec3<T> {
+impl<T> Cross for Vector3<T>
+where T: Copy + Mul,
+      <T as Mul>::Output: Sub
+{
+    type Output = Vector3<<<T as Mul>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: Vector3<T>) -> Self::Output {
+        Vector3 {
+            x: self.y * rhs.z - self.z * rhs.y,
+            y: self.z * rhs.x - self.x * rhs.z,
+            z: self.x * rhs.y - self.y * rhs.x,
+        }
+    }
+}
+
+impl<'a, T> Cross<Vector3<T>> for &'a Vector3<T>
+where T: Copy,
+      &'a T: Mul<T>,
+      <&'a T as Mul<T>>::Output: Sub
+{
+    type Output = Vector3<<<&'a T as Mul<T>>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: Vector3<T>) -> Self::Output {
+        Vector3 {
+            x: &self.y * rhs.z - &self.z * rhs.y,
+            y: &self.z * rhs.x - &self.x * rhs.z,
+            z: &self.x * rhs.y - &self.y * rhs.x,
+        }
+    }
+}
+
+impl<'r, T> Cross<&'r Vector3<T>> for Vector3<T>
+where T: Copy + Mul<&'r T>,
+      <T as Mul<&'r T>>::Output: Sub
+{
+    type Output = Vector3<<<T as Mul<&'r T>>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: &'r Vector3<T>) -> Self::Output {
+        Vector3 {
+            x: self.y * &rhs.z - self.z * &rhs.y,
+            y: self.z * &rhs.x - self.x * &rhs.z,
+            z: self.x * &rhs.y - self.y * &rhs.x,
+        }
+    }
+}
+
+impl<'a, 'r, T> Cross<&'r Vector3<T>> for &'a Vector3<T>
+where &'a T: Mul<&'r T>,
+      <&'a T as Mul<&'r T>>::Output: Sub
+{
+    type Output = Vector3<<<&'a T as Mul<&'r T>>::Output as Sub>::Output>;
+
+    fn cross(self, rhs: &'r Vector3<T>) -> Self::Output {
+        Vector3 {
+            x: &self.y * &rhs.z - &self.z * &rhs.y,
+            y: &self.z * &rhs.x - &self.x * &rhs.z,
+            z: &self.x * &rhs.y - &self.y * &rhs.x,
+        }
+    }
+}
+
+impl<T: Display> Display for Vector3<T> {
     fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
         f.write_str("(")?;
         Display::fmt(&self.x, f)?;
@@ -84,14 +147,14 @@ impl<T: Display> Display for Vec3<T> {
 /// 4-dimensional vector type.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vec4<T> {
+pub struct Vector4<T> {
     pub x: T,
     pub y: T,
     pub z: T,
     pub w: T,
 }
 
-impl<T: Display> Display for Vec4<T> {
+impl<T: Display> Display for Vector4<T> {
     fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
         f.write_str("(")?;
         Display::fmt(&self.x, f)?;
@@ -105,19 +168,19 @@ impl<T: Display> Display for Vec4<T> {
     }
 }
 
-/// Shorthand constructor for [Vec2].
-pub fn vec2<T>(x: T, y: T) -> Vec2<T> {
-    Vec2 { x, y }
+/// Shorthand constructor for [Vector2].
+pub fn vec2<T>(x: T, y: T) -> Vector2<T> {
+    Vector2 { x, y }
 }
 
-/// Shorthand constructor for [Vec3].
-pub fn vec3<T>(x: T, y: T, z: T) -> Vec3<T> {
-    Vec3 { x, y, z }
+/// Shorthand constructor for [Vector3].
+pub fn vec3<T>(x: T, y: T, z: T) -> Vector3<T> {
+    Vector3 { x, y, z }
 }
 
-/// Shorthand constructor for [Vec4].
-pub fn vec4<T>(x: T, y: T, z: T, w: T) -> Vec4<T> {
-    Vec4 { x, y, z, w }
+/// Shorthand constructor for [Vector4].
+pub fn vec4<T>(x: T, y: T, z: T, w: T) -> Vector4<T> {
+    Vector4 { x, y, z, w }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -296,11 +359,37 @@ macro_rules! impl_all {
                 $vec { $($field),* }
             }
 
+            /// Gets the product of the vector's scalar components.
+            pub fn product(self) -> T
+            where T: Mul<Output = T>
+            {
+                // Implementation looks ugly but optimizes to the same machine code as x * y * ...
+                let mut a = None;
+                $(a = match a {
+                    None => Some(self.$field),
+                    Some(a) => Some(a * self.$field),
+                };)*
+                a.unwrap()
+            }
+
             /// Converts the vector's fields into another type.
             pub fn ref_convert<'a, U>(&'a self) -> $vec<U>
             where &'a T: Into<U>
             {
                 $vec { $($field: (&self.$field).into()),* }
+            }
+
+            /// Gets the sum of the vector's scalar components.
+            pub fn sum(self) -> T
+            where T: Add<Output = T>
+            {
+                // Implementation looks ugly but optimizes to the same machine code as x + y + ...
+                let mut a = None;
+                $(a = match a {
+                    None => Some(self.$field),
+                    Some(a) => Some(a + self.$field),
+                };)*
+                a.unwrap()
             }
 
             /// Attempts to convert the vector's fields into another type. On failure, this returns
@@ -317,6 +406,50 @@ macro_rules! impl_all {
             where &'a T: TryInto<U>
             {
                 Ok($vec { $($field: (&self.$field).try_into()?),* })
+            }
+        }
+
+        impl<T> Dot for $vec<T>
+        where T: Mul,
+              <T as Mul>::Output: Add<Output = <T as Mul>::Output>
+        {
+            type Output = <T as Mul>::Output;
+
+            fn dot(self, rhs: $vec<T>) -> Self::Output {
+                (self * rhs).sum()
+            }
+        }
+
+        impl<'a, T> Dot<$vec<T>> for &'a $vec<T>
+        where &'a T: Mul<T>,
+              <&'a T as Mul<T>>::Output: Add<Output = <&'a T as Mul<T>>::Output>
+        {
+            type Output = <&'a T as Mul<T>>::Output;
+
+            fn dot(self, rhs: $vec<T>) -> Self::Output {
+                (self * rhs).sum()
+            }
+        }
+
+        impl<'r, T> Dot<&'r $vec<T>> for $vec<T>
+        where T: Mul<&'r T>,
+              <T as Mul<&'r T>>::Output: Add<Output = <T as Mul<&'r T>>::Output>
+        {
+            type Output = <T as Mul<&'r T>>::Output;
+
+            fn dot(self, rhs: &'r $vec<T>) -> Self::Output {
+                (self * rhs).sum()
+            }
+        }
+
+        impl<'a, 'r, T> Dot<&'r $vec<T>> for &'a $vec<T>
+        where &'a T: Mul<&'r T>,
+              <&'a T as Mul<&'r T>>::Output: Add<Output = <&'a T as Mul<&'r T>>::Output>
+        {
+            type Output = <&'a T as Mul<&'r T>>::Output;
+
+            fn dot(self, rhs: &'r $vec<T>) -> Self::Output {
+                (self * rhs).sum()
             }
         }
 
@@ -378,7 +511,7 @@ macro_rules! impl_all {
 }
 
 impl_all! {
-    impl Vec2(x: T, y: T; 2);
-    impl Vec3(x: T, y: T, z: T; 3);
-    impl Vec4(x: T, y: T, z: T, w: T; 4);
+    impl Vector2(x: T, y: T; 2);
+    impl Vector3(x: T, y: T, z: T; 3);
+    impl Vector4(x: T, y: T, z: T, w: T; 4);
 }

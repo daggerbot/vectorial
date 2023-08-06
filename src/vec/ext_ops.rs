@@ -22,7 +22,7 @@ use ext_ops::{
     WrappingSub,
 };
 
-use crate::vec::{Vec2, Vec3, Vec4};
+use crate::vec::{Vector2, Vector3, Vector4};
 
 /// Implements unary operators for vector types.
 macro_rules! impl_unary_ops {
@@ -307,7 +307,7 @@ macro_rules! impl_all {
 }
 
 impl_all! {
-    impl Vec2(x, y);
-    impl Vec3(x, y, z);
-    impl Vec4(x, y, z, w);
+    impl Vector2(x, y);
+    impl Vector3(x, y, z);
+    impl Vector4(x, y, z, w);
 }
