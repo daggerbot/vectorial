@@ -1,0 +1,7 @@
+# Ignore dotfiles unless explicitly included
+.*
+!/.gitignore
+
+# Ignore Rust artifacts
+/target/
+/Cargo.lock

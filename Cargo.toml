@@ -1,0 +1,7 @@
+[package]
+name = "vectorial"
+version = "0.3.0"
+authors = ["Martin Mills <daggerbot@gmail.com>"]
+edition = "2021"
+description = "Library for general-purpose vector math"
+license = "MPL-2.0"
